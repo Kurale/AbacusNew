@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#8a5430">
+<title>Тренажёр «Абак, русские счёты»</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%AE%3C/text%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   Тренажёр «Абак, русские счёты» — стили
+   ============================================================ */
+:root{
+  --paper:#f4ead6;
+  --card:#fffaf0;
+  --ink:#3a2b1d;
+  --muted:#8c7457;
+  --line:#e6d5b4;
+  --accent:#1f7a63;
+  --accent-hi:#2b9a7c;
+  --accent-lo:#17604d;
+  --danger:#c05b49;
+  --danger-hi:#d97a67;
+  --danger-lo:#9c4032;
+  --gold:#c99a4b;
+  --wood-1:#b07a46;
+  --wood-2:#8a5430;
+  --wood-3:#6f421f;
+  --backplate:#efdcb8;
+  --lcd-bg:#241709;
+  --lcd-on:#ffb45e;
+  --lcd-off:rgba(255,170,80,.09);
+  --shadow:0 14px 34px rgba(88,53,18,.18);
+  --radius:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1100px 700px at 85% -10%, #fff7e3 0%, rgba(255,247,227,0) 60%),
+    radial-gradient(900px 600px at -10% 110%, #f9e9c8 0%, rgba(249,233,200,0) 55%),
+    linear-gradient(180deg,#f7eedb 0%,#efe1c5 100%);
+  min-height:100dvh;
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;
+  overflow-x:hidden;
+}
+button{font:inherit;color:inherit;border:none;background:none;cursor:pointer}
+b{font-weight:700}
+
+/* ---------- декоративные пятна фона ---------- */
+.bg-blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.5;pointer-events:none;z-index:0}
+.bg-blob.b1{width:420px;height:420px;background:#f6d9a8;top:-160px;right:-120px}
+.bg-blob.b2{width:380px;height:380px;background:#e8c9a4;bottom:-160px;left:-120px}
+
+/* ---------- переключение экранов ---------- */
+.screen{display:none;position:relative;z-index:1;min-height:100vh;min-height:100dvh;flex-direction:column;align-items:center}
+body[data-screen="menu"]    #screen-menu{display:flex}
+body[data-screen="game"]    #screen-game{display:flex}
+body[data-screen="results"] #screen-results{display:flex}
+.screen{animation:fadeUp .45s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(3px)}30%,50%,70%{transform:translateX(-5px)}40%,60%{transform:translateX(5px)}}
+
+/* видимость блоков по режиму */
+.only-demo,.only-test{display:none!important}
+body[data-mode="demo"] .only-demo{display:block!important}
+body[data-mode="test"] .only-test{display:block!important}
+.only-t1,.only-t2{display:none!important}
+body[data-ttype="1"] .only-t1{display:block!important}
+body[data-ttype="2"] .only-t2{display:block!important}
+body[data-ttype="2"] #keypad.only-t2{display:grid!important}
+
+/* ============================================================
+   КНОПКИ
+   ============================================================ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 22px;border-radius:14px;font-weight:700;font-size:17px;
+  transition:transform .12s ease, box-shadow .12s ease, filter .15s ease;
+  border-bottom-width:0;
+}
+.btn:active{transform:translateY(2px)}
+.btn-primary{
+  color:#fff;background:linear-gradient(180deg,var(--accent-hi),var(--accent-lo));
+  box-shadow:0 4px 0 var(--accent-lo), 0 10px 22px rgba(23,96,77,.35);
+}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-primary:active{box-shadow:0 1px 0 var(--accent-lo),0 4px 10px rgba(23,96,77,.3)}
+.btn-primary:disabled{filter:grayscale(.5) brightness(.9);cursor:not-allowed;box-shadow:0 4px 0 #9a9a9a}
+.btn-secondary{
+  color:var(--ink);background:linear-gradient(180deg,#fffdf7,#f3e6c8);
+  border:1.5px solid var(--line);box-shadow:0 4px 0 #d9c496;
+}
+.btn-secondary:hover{filter:brightness(1.02)}
+.btn-secondary:active{box-shadow:0 1px 0 #d9c496}
+.btn-block{width:100%}
+.btn-ghost{
+  padding:8px 14px;border-radius:10px;color:var(--muted);font-weight:600;font-size:15px;
+  transition:background .15s,color .15s;
+}
+.btn-ghost:hover{background:rgba(140,116,87,.12);color:var(--ink)}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;font-size:19px;line-height:1;
+  background:rgba(140,116,87,.12);display:inline-flex;align-items:center;justify-content:center;
+  transition:background .15s,transform .12s;
+}
+.icon-btn:hover{background:rgba(140,116,87,.22)}
+.icon-btn:active{transform:scale(.92)}
+
+/* ============================================================
+   ЭКРАН: МЕНЮ
+   ============================================================ */
+.menu-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 18px;gap:26px;width:100%;max-width:860px}
+.hero{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.hero h1{
+  font-size:clamp(26px,4.6vw,44px);line-height:1.15;font-weight:800;letter-spacing:.01em;
+  text-shadow:0 2px 0 rgba(255,255,255,.6);
+}
+.hero h1 .accent{color:var(--accent);white-space:normal}
+.hero .subtitle{color:var(--muted);font-size:clamp(15px,2.2vw,19px);max-width:560px}
+
+/* мини-счёты в шапке */
+.hero-ico{
+  width:96px;height:96px;border-radius:26px;font-size:52px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,.14)),
+    linear-gradient(165deg,var(--wood-1),var(--wood-2) 60%,var(--wood-3));
+  box-shadow:0 14px 30px rgba(88,53,18,.35), inset 0 2px 3px rgba(255,240,210,.4), inset 0 -6px 12px rgba(0,0,0,.28);
+}
+
+.menu-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,290px));gap:18px;justify-content:center;width:100%}
+.mode-card{
+  position:relative;overflow:hidden;text-align:left;padding:26px 24px 24px;border-radius:20px;
+  background:linear-gradient(180deg,#fffdf6,#faf1dd);border:1.5px solid var(--line);
+  box-shadow:var(--shadow);transition:transform .18s ease, box-shadow .18s ease;
+}
+.mode-card:hover{transform:translateY(-4px);box-shadow:0 22px 44px rgba(88,53,18,.24)}
+.mode-card:active{transform:translateY(-1px)}
+.mode-card .mode-ico{
+  width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin-bottom:14px;color:#fff;
+  box-shadow:inset 0 -8px 14px rgba(0,0,0,.18), 0 8px 18px rgba(88,53,18,.25);
+}
+.mode-card.d1 .mode-ico{background:linear-gradient(160deg,#e0a54b,#b5762a)}
+.mode-card.d2 .mode-ico{background:linear-gradient(160deg,#2b9a7c,#17604d)}
+.mode-card .mode-name{font-size:22px;font-weight:800;margin-bottom:6px}
+.mode-card .mode-desc{color:var(--muted);font-size:15px;line-height:1.45}
+.mode-card .arrow{position:absolute;right:20px;top:28px;color:var(--gold);font-size:22px;transition:transform .18s}
+.mode-card:hover .arrow{transform:translateX(5px)}
+.menu-foot{color:var(--muted);font-size:13.5px;text-align:center}
+
+/* ============================================================
+   ДИАЛОГИ
+   ============================================================ */
+.overlay{
+  position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
+  background:rgba(58,40,20,.45);backdrop-filter:blur(3px);padding:20px;
+}
+.overlay.open{display:flex}
+.dialog{
+  width:min(420px,100%);border-radius:22px;padding:28px 26px 24px;text-align:center;
+  background:linear-gradient(180deg,#fffdf6,#f8eed7);border:1.5px solid var(--line);
+  box-shadow:0 30px 60px rgba(50,30,10,.4);animation:pop .28s ease both;
+}
+.dialog h3{font-size:22px;font-weight:800;margin-bottom:6px}
+.dialog .dsub{color:var(--muted);font-size:15px;margin-bottom:18px}
+.count-row{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
+.count-btn{
+  flex:1;max-width:110px;padding:18px 0 15px;border-radius:16px;font-size:30px;font-weight:800;color:var(--accent-lo);
+  background:linear-gradient(180deg,#fffdf6,#f3e6c8);border:1.5px solid var(--line);box-shadow:0 4px 0 #d9c496;
+  transition:transform .12s;
+}
+.count-btn small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-top:2px}
+.count-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #d9c496}
+.dialog .btn-block{margin-top:4px}
+
+/* ============================================================
+   ЭКРАН: ИГРА (демо / тест)
+   ============================================================ */
+.game-wrap{width:100%;max-width:1140px;padding:12px 14px 26px;display:flex;flex-direction:column;gap:12px}
+.statusbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status-title{font-size:clamp(17px,2.4vw,21px);font-weight:800;margin-right:auto}
+.progress-wrap{display:flex;align-items:center;gap:10px}
+.progress-count{font-weight:700;color:var(--muted);font-size:15px;white-space:nowrap}
+.progress-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:240px}
+.pdot{width:10px;height:10px;border-radius:50%;background:rgba(140,116,87,.22);transition:transform .2s,background .2s}
+.pdot.current{background:var(--gold);transform:scale(1.35);box-shadow:0 0 0 3px rgba(201,154,75,.25)}
+.pdot.ok{background:var(--accent-hi)}
+.pdot.err{background:var(--danger-hi)}
+
+.game-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+@media(max-width:979px){.game-grid{grid-template-columns:1fr}}
+
+.stage{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+/* ---------- ЖК-табло (7 сегментов) ---------- */
+.lcd-panel{
+  border-radius:16px;padding:10px 14px 8px;
+  background:linear-gradient(180deg,#3b2a15,#241709 30%,#241709 70%,#3b2a15);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.65), inset 0 -1px 2px rgba(255,220,160,.12), 0 6px 16px rgba(58,40,20,.3);
+  border:1px solid #52381c;
+}
+.lcd{display:flex;justify-content:center;align-items:center;--seg-h:40px;min-height:calc(var(--seg-h) + 10px)}
+.seg-digit{
+  position:relative;width:calc(var(--seg-h) * .56);height:var(--seg-h);
+  margin:0 calc(var(--seg-h) * .10);transform:skewX(-4deg);
+}
+.seg-digit.gap{margin-left:calc(var(--seg-h) * .30)}
+.seg{position:absolute;background:var(--lcd-off);border-radius:calc(var(--seg-h) * .05)}
+.seg.h{height:calc(var(--seg-h) * .105);left:calc(var(--seg-h) * .105);right:calc(var(--seg-h) * .105)}
+.seg.v{width:calc(var(--seg-h) * .105);height:calc(var(--seg-h) * .355)}
+.seg.on{background:var(--lcd-on);box-shadow:0 0 calc(var(--seg-h) * .16) rgba(255,165,70,.55)}
+.s-a{top:0}.s-g{top:calc(50% - var(--seg-h) * .0525)}.s-d{bottom:0}
+.s-f,.s-b{top:calc(var(--seg-h) * .105)}
+.s-e,.s-c{bottom:calc(var(--seg-h) * .105)}
+.s-f,.s-e{left:0}.s-b,.s-c{right:0}
+.seg-digit .sdot{
+  position:absolute;bottom:calc(var(--seg-h) * -.05);left:50%;transform:translateX(-50%);
+  width:calc(var(--seg-h) * .19);height:calc(var(--seg-h) * .19);border-radius:50%;
+  background:var(--lcd-off);
+}
+.seg-digit.dot{width:calc(var(--seg-h) * .40);margin:0 calc(var(--seg-h) * .035)}
+.seg-digit.dot .seg{display:none}
+.sdot.on{background:var(--lcd-on);box-shadow:0 0 calc(var(--seg-h) * .18) rgba(255,165,70,.6)}
+.lcd-caption{
+  text-align:center;color:rgba(255,214,150,.55);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;font-weight:600;padding:2px 0 3px;
+}
+
+/* ---------- счёты ---------- */
+.abacus-area{display:flex;justify-content:center}
+.abacus-outer{display:flex;gap:9px;align-items:stretch;touch-action:none;max-width:100%}
+.abacus{
+  position:relative;flex:1 1 auto;min-width:0;border-radius:calc(var(--frame) * 1.15);
+  height:calc(var(--rowH) * 12 + var(--frame) * 2);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,.14)),
+    repeating-linear-gradient(94deg,rgba(70,35,10,.10) 0 2px,transparent 2px 8px,rgba(120,70,25,.09) 8px 11px,transparent 11px 21px),
+    linear-gradient(165deg,var(--wood-1) 0%,var(--wood-2) 55%,var(--wood-3) 100%);
+  box-shadow:
+    0 18px 40px rgba(70,40,12,.38),
+    0 4px 10px rgba(70,40,12,.25),
+    inset 0 2px 3px rgba(255,240,210,.35),
+    inset 0 -4px 8px rgba(0,0,0,.35);
+}
+.abacus.locked{cursor:not-allowed}
+/* в тесте дробные ряды не используются — приглушаем их */
+body[data-mode="test"] .row.frac{opacity:.45}
+body[data-mode="test"] .row.frac .bead{cursor:default}
+.inner{
+  position:absolute;inset:var(--frame);border-radius:calc(var(--frame) * .5);overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 50% 0%,#f7e7c3,#eddbb2 70%,#e3cd9d);
+  box-shadow:inset 0 5px 12px rgba(94,55,16,.5),inset 0 -2px 5px rgba(255,255,255,.3),inset 0 0 40px rgba(150,105,50,.15);
+  border:1px solid rgba(94,55,16,.55);
+}
+.row{position:relative;height:var(--rowH);cursor:grab}
+.row:active{cursor:grabbing}
+.wire{
+  position:absolute;left:calc(var(--frame) * -.3);right:calc(var(--frame) * -.3);
+  top:50%;height:3px;transform:translateY(-50%);border-radius:2px;
+  background:linear-gradient(180deg,#eef2f5 0%,#b9c0c7 42%,#767d84 58%,#c9d0d7 100%);
+  box-shadow:0 1px 2px rgba(40,20,5,.45);
+}
+.bead{
+  position:absolute;left:0;top:calc((var(--rowH) - var(--beadH)) / 2);
+  width:var(--beadW);height:var(--beadH);border-radius:26% / 46%;
+  will-change:transform;
+  transition:transform .17s cubic-bezier(.25,.8,.35,1);
+}
+.abacus.no-anim .bead{transition:none!important}
+.bead.light{
+  background:radial-gradient(130% 150% at 32% 22%,#fdf0cd 0%,#eed6a3 38%,#d5ab70 76%,#bb8e54 100%);
+  box-shadow:
+    inset 0 calc(var(--beadH) * -.10) calc(var(--beadH) * .20) rgba(110,60,15,.42),
+    inset 0 calc(var(--beadH) * .08) calc(var(--beadH) * .10) rgba(255,255,255,.65),
+    0 2px 3px rgba(85,45,10,.4);
+}
+.bead.dark{
+  background:radial-gradient(130% 150% at 32% 22%,#7c4139 0%,#5d2b24 42%,#45201a 76%,#331410 100%);
+  box-shadow:
+    inset 0 calc(var(--beadH) * -.10) calc(var(--beadH) * .20) rgba(0,0,0,.5),
+    inset 0 calc(var(--beadH) * .08) calc(var(--beadH) * .10) rgba(255,190,150,.28),
+    0 2px 3px rgba(50,20,8,.45);
+}
+.screw{position:absolute;width:calc(var(--frame) * .58);height:calc(var(--frame) * .58);border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#f7ecd4,#c19a60 55%,#7c5a2e);
+  box-shadow:inset 0 -2px 3px rgba(0,0,0,.55),0 1px 1px rgba(255,240,210,.4);z-index:3}
+.screw::after{content:'';position:absolute;left:16%;right:16%;top:45%;height:10%;border-radius:2px;
+  background:rgba(70,40,12,.85);transform:rotate(38deg)}
+.screw.tl{top:calc(var(--frame) * .21);left:calc(var(--frame) * .21)}
+.screw.tr{top:calc(var(--frame) * .21);right:calc(var(--frame) * .21)}
+.screw.bl{bottom:calc(var(--frame) * .21);left:calc(var(--frame) * .21)}
+.screw.br{bottom:calc(var(--frame) * .21);right:calc(var(--frame) * .21)}
+
+/* подписи разрядов справа */
+.labels{display:flex;flex-direction:column;justify-content:center;gap:0;
+  padding:var(--frame) 0;min-width:66px;max-width:96px}
+.labels span{
+  height:var(--rowH);display:flex;align-items:center;justify-content:flex-start;
+  font-size:clamp(9px,1.35vw,12px);font-weight:600;color:#967a55;line-height:1.05;padding-left:2px;
+}
+@media(max-width:600px){.labels{display:none}}
+
+/* ---------- боковая панель ---------- */
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{
+  background:linear-gradient(180deg,#fffdf6,#f9efda);border:1.5px solid var(--line);
+  border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);
+}
+.panel h3{font-size:17px;font-weight:800;margin-bottom:10px}
+.tips{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+.tips li{position:relative;padding-left:24px;font-size:14.5px;line-height:1.45;color:#5b4630}
+.tips li::before{content:'✔';position:absolute;left:2px;top:0;color:var(--accent-hi);font-size:13px}
+
+.task-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.task-badge{
+  font-size:13px;font-weight:700;color:var(--accent-lo);background:rgba(43,154,124,.12);
+  padding:5px 11px;border-radius:999px;white-space:nowrap;
+}
+.score-chip{font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.task-text{font-size:16.5px;font-weight:600;line-height:1.35;color:#4d3a26}
+.task-sub{font-size:13.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.big-number{
+  font-size:clamp(34px,6vw,50px);font-weight:800;letter-spacing:.05em;text-align:center;
+  padding:10px 4px 4px;color:var(--ink);font-variant-numeric:tabular-nums;
+}
+#btnCheck{margin-top:14px}
+.side.checked #keypad,.side.checked #btnCheck{pointer-events:none;opacity:.45}
+
+/* клавиатура */
+#keypad{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px;
+}
+.btn-k{
+  height:56px;border-radius:14px;font-size:22px;font-weight:700;color:var(--ink);
+  background:linear-gradient(180deg,#fffdf6,#f3e6c8);border:1.5px solid var(--line);
+  box-shadow:0 3px 0 #d9c496;transition:transform .1s,box-shadow .1s;
+  font-variant-numeric:tabular-nums;
+}
+.btn-k:active{transform:translateY(2px);box-shadow:0 1px 0 #d9c496}
+.btn-k.util{font-size:15px;color:var(--muted)}
+.btn-k.go{color:#fff;background:linear-gradient(180deg,var(--accent-hi),var(--accent-lo));border-color:var(--accent-lo);box-shadow:0 3px 0 var(--accent-lo)}
+.btn-k.go:active{box-shadow:0 1px 0 var(--accent-lo)}
+
+/* обратная связь */
+.feedback{margin-top:14px;border-radius:14px;padding:14px;animation:pop .25s ease both}
+.feedback.ok{background:linear-gradient(180deg,#e7f6ec,#d8f0e0);border:1.5px solid #a5d9b4}
+.feedback.err{background:linear-gradient(180deg,#fdece8,#fbdcd4);border:1.5px solid #e4a898;animation:pop .25s ease both, shake .45s ease .05s}
+.fb-title{font-size:19px;font-weight:800;margin-bottom:4px}
+.feedback.ok .fb-title{color:var(--accent-lo)}
+.feedback.err .fb-title{color:var(--danger-lo)}
+.fb-detail{font-size:14.5px;line-height:1.45;color:#5b4630;margin-bottom:12px}
+.feedback .btn{margin-top:2px}
+
+/* ============================================================
+   ЭКРАН: РЕЗУЛЬТАТЫ
+   ============================================================ */
+.results-card{
+  margin:auto;width:min(480px,100%);border-radius:26px;padding:30px 26px 26px;text-align:center;
+  background:linear-gradient(180deg,#fffdf6,#f8eed7);border:1.5px solid var(--line);
+  box-shadow:0 30px 60px rgba(88,53,18,.28);animation:pop .35s ease both;
+}
+.results-card h2{font-size:26px;font-weight:800;margin-bottom:18px}
+.ring-wrap{position:relative;width:170px;height:170px;margin:0 auto 14px}
+.ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#eadfc4;stroke-width:11}
+.ring-fg{fill:none;stroke:url(#ringGrad);stroke-width:11;stroke-linecap:round;transition:stroke-dashoffset 1.1s cubic-bezier(.25,.8,.35,1)}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{font-size:42px;font-weight:800;line-height:1}
+.ring-label{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+.stats-row{display:flex;gap:10px;margin:8px 0 16px}
+.stat{flex:1;border-radius:14px;padding:12px 6px;background:#fbf4e4;border:1.5px solid var(--line)}
+.stat b{display:block;font-size:26px;line-height:1.1}
+.stat span{font-size:12.5px;color:var(--muted);font-weight:600}
+.stat.ok b{color:var(--accent-lo)}
+.stat.err b{color:var(--danger-lo)}
+.verdict{font-size:17px;font-weight:700;color:#4d3a26;margin-bottom:18px}
+.row-btns{display:flex;gap:10px;flex-wrap:wrap}
+.row-btns .btn{flex:1;min-width:150px}
+
+/* адаптив */
+@media(max-width:640px){
+  .game-wrap{padding:8px 10px 20px}
+  .panel{padding:14px}
+  .btn{padding:12px 18px;font-size:16px}
+  .btn-k{height:52px}
+  .count-btn{font-size:26px;padding:15px 0 12px}
+}
+</style>
+</head>
+<body data-screen="menu">
+
+<div class="bg-blob b1"></div>
+<div class="bg-blob b2"></div>
+
+<!-- ================= ЭКРАН: МЕНЮ ================= -->
+<section class="screen" id="screen-menu">
+  <div class="menu-wrap">
+    <div class="hero">
+      <div class="hero-ico" aria-hidden="true">🧮</div>
+      <h1>Тренажёр математический<br><span class="accent">«Абак, русские счёты»</span></h1>
+      <p class="subtitle">Учимся откладывать и читать числа на классических русских счётах: разряды от единиц до десяти миллионов, внизу — доли и четверти</p>
+    </div>
+    <div class="menu-cards">
+      <button class="mode-card d1" id="btnDemo">
+        <div class="mode-ico">🧮</div>
+        <div class="mode-name">Демонстрация</div>
+        <div class="mode-desc">Свободно передвигайте костяшки — табло мгновенно покажет отложенное число</div>
+        <div class="arrow">→</div>
+      </button>
+      <button class="mode-card d2" id="btnTest">
+        <div class="mode-ico">📝</div>
+        <div class="mode-name">Тест</div>
+        <div class="mode-desc">Задания двух типов: «Отложи число» и «Запиши число». 5, 10 или 15 заданий</div>
+        <div class="arrow">→</div>
+      </button>
+    </div>
+    <p class="menu-foot">Работает мышью и пальцем · костяшки можно тащить или просто нажимать · звук включается кнопкой 🔊</p>
+  </div>
+</section>
+
+<!-- ================= ЭКРАН: ИГРА ================= -->
+<section class="screen" id="screen-game">
+  <div class="game-wrap">
+
+    <div class="statusbar">
+      <button class="btn-ghost" id="btnBack">‹ Меню</button>
+      <div class="status-title" id="statusTitle">Демонстрация</div>
+      <div class="progress-wrap only-test">
+        <div class="progress-dots" id="progressDots"></div>
+        <div class="progress-count" id="progressCount">1 / 10</div>
+      </div>
+      <button class="icon-btn" id="btnSound" title="Звук вкл/выкл">🔊</button>
+    </div>
+
+    <div class="game-grid">
+      <!-- левая колонка: табло + счёты -->
+      <div class="stage">
+        <div class="lcd-panel">
+          <div class="lcd" id="lcd"></div>
+          <div class="lcd-caption" id="lcdCaption">значение на счётах</div>
+        </div>
+        <div class="abacus-area" id="abacusArea">
+          <div class="abacus-outer" id="abOuter">
+            <div class="abacus" id="abacus">
+              <div class="screw tl"></div><div class="screw tr"></div>
+              <div class="screw bl"></div><div class="screw br"></div>
+              <div class="inner" id="abInner"></div>
+            </div>
+            <div class="labels" id="labels" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- правая колонка -->
+      <aside class="side" id="sidePanel">
+
+        <!-- демо -->
+        <div class="panel only-demo">
+          <h3>Как считать на счётах</h3>
+          <ul class="tips">
+            <li>Ряд «1» — <b>единицы</b>, выше — десятки, сотни и так далее до <b>10 000 000</b>.</li>
+            <li>Каждая костяшка — <b>один</b> в своём разряде. Десять в ряду = одна костяшка старшего ряда.</li>
+            <li>Сдвиньте костяшки <b>влево</b> — табло сразу покажет число.</li>
+            <li>Костяшку можно <b>перетащить</b> мышкой или пальцем, либо просто нажать на нужную.</li>
+            <li>Нижние четыре ряда — доли (1/1000…1/4): работают здесь, но в тестах не используются.</li>
+          </ul>
+          <button class="btn btn-secondary btn-block" id="btnReset">↺&nbsp; Сбросить счёты</button>
+        </div>
+
+        <!-- тест -->
+        <div class="panel only-test">
+          <div class="task-head">
+            <span class="task-badge" id="taskBadge">Задание 1 из 10</span>
+            <span class="score-chip" id="scoreChip">✔ 0 · ✘ 0</span>
+          </div>
+          <div class="task-text only-t1">Отложи на счётах число:</div>
+          <div class="task-text only-t2">Запиши число, отложенное на счётах:</div>
+          <div class="big-number only-t1" id="taskNumber">0</div>
+          <p class="task-sub only-t1">Сдвинь костяшки вправо и нажми «Проверить».</p>
+          <p class="task-sub only-t2">Посмотри на счёты и введи число на клавиатуре ниже.</p>
+
+          <div id="keypad" class="only-t2" aria-label="Цифровая клавиатура"></div>
+
+          <button class="btn btn-primary btn-block" id="btnCheck">Проверить</button>
+
+          <div class="feedback" id="feedback" hidden>
+            <div class="fb-title" id="fbTitle"></div>
+            <div class="fb-detail" id="fbDetail"></div>
+            <button class="btn btn-primary btn-block" id="btnNext">Далее →</button>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ЭКРАН: РЕЗУЛЬТАТЫ ================= -->
+<section class="screen" id="screen-results">
+  <div class="results-card">
+    <h2>Результаты теста</h2>
+    <div class="ring-wrap">
+      <svg viewBox="0 0 150 150">
+        <defs>
+          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2b9a7c"/>
+            <stop offset="100%" stop-color="#c99a4b"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="75" cy="75" r="62"/>
+        <circle class="ring-fg" id="ringFg" cx="75" cy="75" r="62"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-pct" id="ringPct">0%</div>
+        <div class="ring-label">точность</div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat ok"><b id="statOk">0</b><span>верных</span></div>
+      <div class="stat err"><b id="statErr">0</b><span>ошибок</span></div>
+      <div class="stat"><b id="statTotal">0</b><span>заданий</span></div>
+    </div>
+    <p class="verdict" id="verdict">Отлично!</p>
+    <div class="row-btns">
+      <button class="btn btn-primary" id="btnAgain">↺&nbsp; Пройти ещё раз</button>
+      <button class="btn btn-secondary" id="btnMenu2">В меню</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ДИАЛОГ: количество заданий ================= -->
+<div class="overlay" id="dialogCount">
+  <div class="dialog">
+    <h3>Сколько заданий?</h3>
+    <p class="dsub">Задания «Отложи число» и «Запиши число» чередуются в случайном порядке.</p>
+    <div class="count-row">
+      <button class="count-btn" data-n="5">5<small>заданий</small></button>
+      <button class="count-btn" data-n="10">10<small>заданий</small></button>
+      <button class="count-btn" data-n="15">15<small>заданий</small></button>
+    </div>
+    <button class="btn btn-secondary btn-block" id="btnCountBack">Отмена</button>
+  </div>
+</div>
+
+<!-- ================= ДИАЛОГ: выход из теста ================= -->
+<div class="overlay" id="dialogLeave">
+  <div class="dialog">
+    <h3>Прервать тест?</h3>
+    <p class="dsub">Прогресс текущего теста не сохранится.</p>
+    <div class="row-btns">
+      <button class="btn btn-secondary" id="btnLeaveNo">Продолжить тест</button>
+      <button class="btn btn-primary" id="btnLeaveYes" style="background:linear-gradient(180deg,var(--danger-hi),var(--danger-lo));box-shadow:0 4px 0 var(--danger-lo),0 10px 22px rgba(156,64,50,.35)">Прервать</button>
+    </div>
+  </div>
+</div>
+
+<noscript><p style="padding:20px;text-align:center">Для работы тренажёра нужен включённый JavaScript.</p></noscript>
+
+<script>
+'use strict';
+/* ============================================================
+   Тренажёр «Абак, русские счёты» — логика
+   ============================================================ */
+
+/* ---------- константы ---------- */
+const ROWS = 12;              // рядов (проволок)
+const SLOTS = 13;             // разрядов на табло (включая точку)
+const MAX_DIGITS_TEST = 8;    // максимум разрядов в заданиях (до 10 000 000)
+/* Ряды снизу вверх — строго по классической схеме русских счётов:
+   3 дробных проволоки, ряд четвертей (4 костяшки: б-ч-ч-б), выше — разряды 1…10 000 000.
+   mil — вес костяшки в тысячных долях (для дробных рядов). */
+const ROW_DEFS = [
+  { kind: 'frac',  beads: 10, mil: 1,   label: '1/1000' },
+  { kind: 'frac',  beads: 10, mil: 10,  label: '1/100' },
+  { kind: 'frac',  beads: 10, mil: 100, label: '1/10' },
+  { kind: 'frac',  beads: 4,  mil: 250, label: '1/4' },
+  ...Array.from({ length: 8 }, (_, p) => ({
+    kind: 'int', beads: 10, place: p,
+    label: String(10 ** p).replace(/\B(?=(\d{3})+(?!\d))/g, '\u2009'),
+  })),
+];
+const SEG_MAP = {'0':'abcdef','1':'bc','2':'abged','3':'abgcd','4':'fgbc',
+                 '5':'afgcd','6':'afgedc','7':'abc','8':'abcdefg','9':'abcdfg'};
+
+const $  = s => document.querySelector(s);
+const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+const randInt = (a,b) => a + Math.floor(Math.random() * (b - a + 1));
+const fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u2009');
+
+/* ---------- состояние ---------- */
+const state = {
+  mode: null,          // 'demo' | 'test' | null
+  ttype: null,         // 1 | 2 — тип текущего задания
+  counts: new Array(ROWS).fill(0), // counts[p] — костяшек вправо в ряду разряда p
+  locked: true,        // блокировка взаимодействия со счётами
+  input: '',           // ввод в задании «Запиши число»
+  test: null,          // { total, idx, ok, err, tasks, checked }
+};
+
+/* ---------- элементы ---------- */
+const els = {
+  body: document.body,
+  abacus: $('#abacus'), inner: $('#abInner'), outer: $('#abOuter'),
+  area: $('#abacusArea'), labels: $('#labels'),
+  lcd: $('#lcd'), lcdCaption: $('#lcdCaption'),
+  statusTitle: $('#statusTitle'), progressDots: $('#progressDots'), progressCount: $('#progressCount'),
+  taskBadge: $('#taskBadge'), scoreChip: $('#scoreChip'), taskNumber: $('#taskNumber'),
+  keypad: $('#keypad'), btnCheck: $('#btnCheck'), feedback: $('#feedback'),
+  fbTitle: $('#fbTitle'), fbDetail: $('#fbDetail'), btnNext: $('#btnNext'),
+  side: $('#sidePanel'), btnReset: $('#btnReset'), btnBack: $('#btnBack'), btnSound: $('#btnSound'),
+};
+
+/* ============================================================
+   ЗВУК (Web Audio, всё генерируется на лету)
+   ============================================================ */
+const sfx = (() => {
+  let ctx = null, master = null, noiseBuf = null;
+  let on = localStorage.getItem('abak-sound') !== 'off';
+  let lastTick = 0;
+
+  function ensure() {
+    if (!on) return null;
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      master = ctx.createGain(); master.gain.value = .5; master.connect(ctx.destination);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate * .06, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, dur, type, vol, when = 0, slide = 0) {
+    const c = ensure(); if (!c) return;
+    const t = c.currentTime + when;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + dur);
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + .008);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + .03);
+  }
+  function knock(freq, vol) { // деревянный «тук» — короткий шум через полосовой фильтр
+    const c = ensure(); if (!c) return;
+    const t = c.currentTime;
+    const src = c.createBufferSource(); src.buffer = noiseBuf;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 1.4;
+    const g = c.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(.0001, t + .05);
+    src.connect(bp); bp.connect(g); g.connect(master);
+    src.start(t); src.stop(t + .07);
+  }
+  return {
+    get enabled() { return on; },
+    toggle() { on = !on; localStorage.setItem('abak-sound', on ? 'on' : 'off'); if (on) ensure(); return on; },
+    tick() { // стук костяшки
+      const now = performance.now();
+      if (now - lastTick < 45) return;
+      lastTick = now;
+      knock(1900 + Math.random() * 500, .5);
+      tone(950 + Math.random() * 250, .03, 'triangle', .05);
+    },
+    ui()   { tone(1250, .05, 'sine', .10); },
+    ok()   { tone(659, .13, 'sine', .22); tone(880, .18, 'sine', .22, .11); },
+    err()  { tone(235, .16, 'triangle', .16); tone(180, .22, 'triangle', .16, .15); },
+    win()  { [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'sine', .18, i * .13)); },
+  };
+})();
+
+/* ============================================================
+   ГЕОМЕТРИЯ И ПОСТРОЕНИЕ СЧЁТОВ
+   ============================================================ */
+let geo = { frame: 16, rowH: 28, beadW: 30, beadH: 22, gap: 2, step: 32, innerW: 320, pad: 6 };
+const rowEls = [];   // rowEls[p] — элемент ряда разряда p
+const beadEls = [];  // beadEls[p][j] — костяшка j (порядок слева направо по проволоке)
+
+function buildAbacus() {
+  for (let r = ROWS - 1; r >= 0; r--) { // добавляем сверху вниз; r — номер ряда от низа
+    const def = ROW_DEFS[r];
+    const row = document.createElement('div');
+    row.className = 'row' + (def.kind === 'int' ? '' : ' frac');
+    row.dataset.row = r;
+    row.appendChild(Object.assign(document.createElement('div'), { className: 'wire' }));
+    beadEls[r] = [];
+    for (let j = 0; j < def.beads; j++) {
+      const dark = def.beads === 4 ? (j === 1 || j === 2) : (j === 4 || j === 5);
+      const b = document.createElement('div');
+      b.className = 'bead ' + (dark ? 'dark' : 'light');
+      row.appendChild(b);
+      beadEls[r][j] = b;
+    }
+    rowEls[r] = row;
+    els.inner.appendChild(row);
+    row.addEventListener('pointerdown', e => onRowDown(e, r));
+    row.addEventListener('pointermove', onRowMove);
+    row.addEventListener('pointerup', onRowUp);
+    row.addEventListener('pointercancel', onRowUp);
+  }
+  // подписи разрядов справа (сверху вниз — от 10 000 000 к долям)
+  for (let r = ROWS - 1; r >= 0; r--) {
+    const s = document.createElement('span');
+    s.textContent = ROW_DEFS[r].label;
+    els.labels.appendChild(s);
+  }
+  els.abacus.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+function fitAbacus() {
+  const availW = els.area.clientWidth || 320;
+  const maxByH = Math.max(300, window.innerHeight - 320);
+  const w = Math.max(260, Math.min(availW, 660, maxByH * 1.02));
+  const labelsW = els.labels.offsetParent ? els.labels.offsetWidth + 9 : 0; // колонка подписей разрядов
+  els.outer.style.width = (w + labelsW) + 'px';
+  layout();
+}
+
+function layout() {
+  const w = els.abacus.clientWidth;
+  if (!w) return;
+  const frame = clamp(w * .045, 10, 24);
+  // просторный ряд: 10 костяшек занимают ~9.2H, остальное — свободный пробег (~3.4H)
+  const rowH = (w - 2 * frame) / 12.55;
+  const beadW = rowH * .80, beadH = rowH * .84, gap = rowH * .07;
+  geo = { frame, rowH, beadW, beadH, gap, step: beadW + gap, innerW: w - 2 * frame, pad: rowH * .25 };
+  const v = {
+    '--frame': frame + 'px', '--rowH': rowH + 'px',
+    '--beadW': beadW + 'px', '--beadH': beadH + 'px',
+  };
+  Object.entries(v).forEach(([k, val]) => { els.abacus.style.setProperty(k, val); els.outer.style.setProperty(k, val); });
+  positionAll(true);
+}
+
+/* координата x костяшки j в ряду r при счёте k.
+   В покое костяшки собраны справа, отложенные (индексы 0..k-1) — слева:
+   через зазор переходит только граничная костяшка, как на настоящих счётах */
+function beadX(r, j) {
+  const k = state.counts[r];
+  if (j < k) return geo.pad + j * geo.step;                          // отложенные — слева
+  const n = ROW_DEFS[r].beads;
+  return geo.innerW - geo.pad - geo.beadW - (n - 1 - j) * geo.step;   // покой — справа
+}
+function positionRow(r) {
+  for (let j = 0; j < ROW_DEFS[r].beads; j++)
+    beadEls[r][j].style.transform = `translate3d(${beadX(r, j)}px,0,0)`;
+}
+function positionAll(instant) {
+  if (instant) {
+    els.abacus.classList.add('no-anim');
+    for (let p = 0; p < ROWS; p++) positionRow(p);
+    void els.abacus.offsetWidth; // фиксируем позицию без анимации
+    els.abacus.classList.remove('no-anim');
+  } else for (let p = 0; p < ROWS; p++) positionRow(p);
+}
+
+/* программная расстановка целого числа (дробные ряды — в покой), с каскадной анимацией */
+let animToken = 0;
+function setValueAnimated(value, { dur = 420, stagger = 26 } = {}) {
+  const token = ++animToken;
+  for (let r = 0; r < ROWS; r++) {
+    const def = ROW_DEFS[r];
+    state.counts[r] = def.kind === 'int' ? (Math.floor(value / Math.pow(10, def.place)) % 10) : 0;
+  }
+  for (let r = 0; r < ROWS; r++) {
+    const delay = r * stagger;
+    for (const b of beadEls[r])
+      b.style.transition = `transform ${dur}ms cubic-bezier(.25,.9,.3,1) ${delay}ms`;
+  }
+  positionAll(false);
+  const total = (ROWS - 1) * stagger + dur + 60;
+  setTimeout(() => {
+    if (token !== animToken) return;
+    for (let r = 0; r < ROWS; r++) for (const b of beadEls[r]) b.style.transition = '';
+  }, total);
+  return total;
+}
+/* значение на счётах в тысячных долях — точная целая арифметика */
+function getSumMil() {
+  let s = 0;
+  ROW_DEFS.forEach((def, r) => {
+    if (def.kind === 'int') s += state.counts[r] * 1000 * Math.pow(10, def.place);
+    else s += state.counts[r] * def.mil;
+  });
+  return s;
+}
+function formatSum(S) { // тысячные → строка для табло («12» или «12.35»)
+  const ip = Math.floor(S / 1000), fp = S % 1000;
+  if (fp === 0) return String(ip);
+  return ip + '.' + String(fp).padStart(3, '0').replace(/0+$/, '');
+}
+
+/* ============================================================
+   ВЗАИМОДЕЙСТВИЕ: перетаскивание и тапы
+   ============================================================ */
+const drags = new Map(); // pointerId -> {row, n, k0, x0, bead, moved, rect}
+
+function hitBead(r, x) { // ближайшая костяшка к точке (диапазоны соседей почти соприкасаются)
+  let best = -1, bestDist = Infinity;
+  for (let j = 0; j < ROW_DEFS[r].beads; j++) {
+    const bx = beadX(r, j);
+    if (x >= bx - 2 && x <= bx + geo.beadW + 2) {
+      const d = Math.abs(x - (bx + geo.beadW / 2));
+      if (d < bestDist) { bestDist = d; best = j; }
+    }
+  }
+  return best;
+}
+function onRowDown(e, r) {
+  if (state.locked || e.button > 0) return;
+  if (state.mode === 'test' && ROW_DEFS[r].kind !== 'int') return; // дробные ряды — только в демо
+  if ([...drags.values()].some(d => d.row === r)) return;
+  const rect = rowEls[r].getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  drags.set(e.pointerId, { row: r, n: ROW_DEFS[r].beads, k0: state.counts[r], x0: x, bead: hitBead(r, x), moved: false, rect });
+  try { rowEls[r].setPointerCapture(e.pointerId); } catch (_) {}
+  e.preventDefault();
+}
+function onRowMove(e) {
+  const d = drags.get(e.pointerId);
+  if (!d) return;
+  const x = e.clientX - d.rect.left;
+  if (Math.abs(x - d.x0) > 4) d.moved = true;
+  const steps = Math.round((x - d.x0) / geo.step); // движение влево → шаги отрицательные → счёт растёт
+  let k;
+  if (d.bead >= 0) {
+    /* за костяшку j: граница «на ней» означает k = j+1; тянуть можно только к своей стороне */
+    if (d.bead < d.k0) k = clamp(d.k0 - steps, d.bead, d.k0);      // отложенную костяшку тянут вправо
+    else               k = clamp(d.k0 - steps, d.k0, d.bead + 1);  // костяшку из покоя тянут влево
+  } else k = clamp(d.k0 - steps, 0, d.n);
+  if (k !== state.counts[d.row]) setCount(d.row, k);
+}
+function onRowUp(e) {
+  const d = drags.get(e.pointerId);
+  if (!d) return;
+  drags.delete(e.pointerId);
+  if (state.locked) return;
+  if (!d.moved) { // простой тап: граница между группами становится на нажатой костяшке
+    const k = d.bead >= 0
+      ? d.bead + 1
+      : clamp(Math.ceil((d.x0 - geo.pad + geo.gap) / geo.step), 0, d.n);
+    if (k !== state.counts[d.row]) setCount(d.row, k);
+  }
+}
+function setCount(r, k) {
+  state.counts[r] = k;
+  positionRow(r);
+  sfx.tick();
+  if (state.mode === 'demo') renderLcdValue();
+}
+
+/* ============================================================
+   ЖК-ТАБЛО (7 сегментов)
+   ============================================================ */
+const SLOTS_LCD = SLOTS;
+const lcdSlots = [];
+function buildLcd() {
+  for (let i = 0; i < SLOTS_LCD; i++) {
+    const d = document.createElement('div');
+    d.className = 'seg-digit';
+    for (const s of ['a','b','c','d','e','f','g']) {
+      const seg = document.createElement('i');
+      seg.className = `seg ${'agd'.includes(s) ? 'h' : 'v'} s-${s}`;
+      d.appendChild(seg);
+    }
+    const dot = document.createElement('i');
+    dot.className = 'sdot';
+    d.appendChild(dot);
+    els.lcd.appendChild(d);
+    lcdSlots.push(d);
+  }
+  sizeLcd();
+}
+function sizeLcd() {
+  const w = els.lcd.clientWidth || 300;
+  const h = clamp((w - 20) / 11.0, 20, 44);
+  els.lcd.style.setProperty('--seg-h', h + 'px');
+}
+function setLcd(str) { // строка цифр (может содержать одну точку) или null — погасить
+  const s = str == null ? '' : String(str);
+  const totalDigits = [...s].filter(c => c >= '0' && c <= '9').length;
+  lcdSlots.forEach(sl => {
+    sl.style.display = 'none';
+    sl.classList.remove('gap', 'dot');
+    sl.querySelector('.sdot').classList.remove('on');
+    sl.querySelectorAll('.seg').forEach(g => g.classList.remove('on'));
+  });
+  let pi = SLOTS_LCD - 1, ci = s.length - 1, seen = 0;
+  while (ci >= 0 && pi >= 0) { // заполнение справа налево
+    const slot = lcdSlots[pi], ch = s[ci];
+    slot.style.display = '';
+    if (ch === '.') {
+      slot.classList.add('dot');
+      slot.querySelector('.sdot').classList.add('on');
+    } else {
+      const map = SEG_MAP[ch] || '';
+      slot.querySelectorAll('.seg').forEach(g => {
+        const nm = g.className.match(/s-([a-g])/)[1];
+        g.classList.toggle('on', map.includes(nm));
+      });
+      if (++seen < totalDigits && seen % 3 === 0) slot.classList.add('gap');
+    }
+    pi--; ci--;
+  }
+}
+function renderLcdValue() { setLcd(formatSum(getSumMil())); }
+
+/* ============================================================
+   НАВИГАЦИЯ И РЕЖИМЫ
+   ============================================================ */
+function showScreen(name) {
+  els.body.dataset.screen = name;
+  window.scrollTo(0, 0);
+  if (name === 'game') {
+    fitAbacus(); sizeLcd();                                          // сразу
+    requestAnimationFrame(() => { fitAbacus(); sizeLcd(); });        // после первого кадра
+    setTimeout(() => { fitAbacus(); sizeLcd(); }, 80);               // страховка
+  }
+}
+function setModeUI() {
+  if (state.mode) els.body.dataset.mode = state.mode; else delete els.body.dataset.mode;
+  if (state.ttype) els.body.dataset.ttype = state.ttype; else delete els.body.dataset.ttype;
+  els.statusTitle.textContent = state.mode === 'demo' ? 'Демонстрация' : 'Тест';
+}
+
+/* ---------- Демонстрация ---------- */
+function startDemo() {
+  state.mode = 'demo'; state.ttype = null; state.input = '';
+  setValueAnimated(0, { dur: 260, stagger: 12 });
+  state.locked = false;
+  els.abacus.classList.remove('locked');
+  els.lcdCaption.textContent = 'значение на счётах';
+  setModeUI();
+  renderLcdValue();
+  showScreen('game');
+}
+
+/* ---------- Тест ---------- */
+function genNumber() {
+  const d = randInt(1, MAX_DIGITS_TEST);
+  const lo = d === 1 ? 1 : Math.pow(10, d - 1);
+  return randInt(lo, Math.pow(10, d) - 1);
+}
+function buildTasks(total) {
+  const types = [];
+  for (let i = 0; i < total; i++) types.push(i % 2 ? 2 : 1);
+  for (let i = types.length - 1; i > 0; i--) { // перемешиваем
+    const j = randInt(0, i);
+    [types[i], types[j]] = [types[j], types[i]];
+  }
+  const tasks = []; let prev = -1;
+  for (const type of types) {
+    let n; do { n = genNumber(); } while (n === prev);
+    prev = n;
+    tasks.push({ type, n });
+  }
+  return tasks;
+}
+function startTest(total) {
+  state.mode = 'test';
+  state.test = { total, idx: 0, ok: 0, err: 0, tasks: buildTasks(total), checked: false };
+  setModeUI();
+  showScreen('game');
+  renderProgress();
+  nextTask(true);
+}
+function nextTask(first = false) {
+  const t = state.test;
+  if (t.idx >= t.total) return finishTest();
+  const task = t.tasks[t.idx];
+  state.ttype = task.type;
+  state.input = '';
+  t.checked = false;
+  els.side.classList.remove('checked');
+  els.feedback.hidden = true;
+  els.btnCheck.hidden = false;
+  renderProgress();
+  setModeUI();
+
+  if (task.type === 1) {
+    /* «Отложи число»: счёты свободны, табло показывает цель */
+    els.lcdCaption.textContent = 'отложи на счётах число';
+    setLcd(String(task.n));
+    setValueAnimated(0, { dur: 320, stagger: 14 });
+    state.locked = false;
+    els.abacus.classList.remove('locked');
+  } else {
+    /* «Запиши число»: раскладываем число и блокируем счёты */
+    els.lcdCaption.textContent = 'твой ответ';
+    setLcd(null);
+    const dur = setValueAnimated(task.n, { dur: 430, stagger: 34 });
+    state.locked = true;
+    els.abacus.classList.add('locked');
+    setTimeout(() => { if (state.mode === 'test') sfx.tick(); }, Math.min(dur, 700));
+  }
+  updateTaskUI();
+  updateCheckEnabled();
+}
+function updateTaskUI() {
+  const t = state.test, task = t.tasks[t.idx];
+  els.taskBadge.textContent = `Задание ${t.idx + 1} из ${t.total}`;
+  els.scoreChip.textContent = `✔ ${t.ok} · ✘ ${t.err}`;
+  if (task.type === 1) els.taskNumber.textContent = fmt(task.n);
+}
+function renderProgress() {
+  const t = state.test; if (!t) return;
+  els.progressCount.textContent = `${Math.min(t.idx + 1, t.total)} / ${t.total}`;
+  els.progressDots.innerHTML = '';
+  for (let i = 0; i < t.total; i++) {
+    const d = document.createElement('i');
+    d.className = 'pdot' + (i === t.idx ? ' current' : '');
+    els.progressDots.appendChild(d);
+  }
+  t.tasks.forEach((task, i) => { // уже проверенные
+    if (task.result === true) els.progressDots.children[i]?.classList.add('ok');
+    if (task.result === false) els.progressDots.children[i]?.classList.add('err');
+  });
+}
+function updateCheckEnabled() {
+  const t = state.test;
+  els.btnCheck.disabled = !!(t && t.tasks[t.idx].type === 2 && !state.input);
+}
+function checkAnswer() {
+  const t = state.test;
+  if (!t || t.checked) return;
+  const task = t.tasks[t.idx];
+  t.checked = true;
+  state.locked = true;
+  els.abacus.classList.add('locked');
+  els.side.classList.add('checked');
+
+  let ok;
+  if (task.type === 1) ok = getSumMil() === task.n * 1000;
+  else ok = parseInt(state.input, 10) === task.n;
+  task.result = ok;
+  if (ok) { t.ok++; sfx.ok(); try { navigator.vibrate && navigator.vibrate(35); } catch (_) {} }
+  else    { t.err++; sfx.err(); try { navigator.vibrate && navigator.vibrate([50, 40, 50]); } catch (_) {} }
+
+  /* точки прогресса */
+  const dot = els.progressDots.children[t.idx];
+  if (dot) { dot.classList.remove('current'); dot.classList.add(ok ? 'ok' : 'err'); }
+
+  /* текст обратной связи */
+  els.feedback.className = 'feedback ' + (ok ? 'ok' : 'err');
+  els.fbTitle.textContent = ok ? '✔ Верно!' : '✘ Неверно';
+  if (task.type === 1) {
+    els.fbDetail.innerHTML = ok
+      ? `Число <b>${fmt(task.n)}</b> отложено правильно.`
+      : `На счётах — <b>${fmt(formatSum(getSumMil()))}</b>, а нужно <b>${fmt(task.n)}</b>. Смотри: счёты показывают правильный ответ.`;
+  } else {
+    els.fbDetail.innerHTML = ok
+      ? `Ты правильно прочитал число: <b>${fmt(task.n)}</b>.`
+      : `Правильный ответ: <b>${fmt(task.n)}</b>.`;
+  }
+  els.btnNext.textContent = (t.idx + 1 >= t.total) ? 'Показать результаты' : 'Следующее задание →';
+  els.btnCheck.hidden = true;
+  els.feedback.hidden = false;
+
+  /* при ошибке в «Отложи число» показываем правильную раскладку */
+  if (task.type === 1 && !ok) setTimeout(() => {
+    if (state.mode === 'test' && state.test.checked) setValueAnimated(task.n, { dur: 480, stagger: 26 });
+  }, 550);
+
+  updateTaskUI();
+}
+function advance() {
+  const t = state.test; if (!t) return;
+  t.idx++;
+  nextTask();
+}
+function finishTest() {
+  const t = state.test;
+  state.locked = true; state.ttype = null;
+  setModeUI();
+  const total = t.total, ok = t.ok;
+  const pct = Math.round(ok / total * 100);
+  $('#statOk').textContent = ok;
+  $('#statErr').textContent = t.err;
+  $('#statTotal').textContent = total;
+  $('#verdict').textContent =
+    pct === 100 ? 'Идеально! Ты — настоящий счетовод!' :
+    pct >= 80  ? 'Отличный результат!' :
+    pct >= 60  ? 'Хорошо! Ещё немного практики — и будет отлично.' :
+    pct >= 40  ? 'Есть куда расти — потренируйся в режиме «Демонстрация».' :
+                 'Не расстраивайся! Попробуй ещё раз.';
+  showScreen('results');
+  const C = 2 * Math.PI * 62;
+  const fg = $('#ringFg');
+  fg.style.strokeDasharray = C;
+  fg.style.strokeDashoffset = C;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    fg.style.strokeDashoffset = C * (1 - pct / 100);
+  }));
+  /* счётчик процентов */
+  const pctEl = $('#ringPct'); const t0 = performance.now();
+  (function step(now) {
+    const k = clamp((now - t0) / 1000, 0, 1);
+    pctEl.textContent = Math.round(pct * (1 - Math.pow(1 - k, 3))) + '%';
+    if (k < 1) requestAnimationFrame(step);
+  })(t0);
+  if (pct >= 60) sfx.win(); else sfx.ok();
+}
+
+/* ============================================================
+   КЛАВИАТУРА «ЗАПИШИ ЧИСЛО»
+   ============================================================ */
+function buildKeypad() {
+  const keys = ['1','2','3','4','5','6','7','8','9','back','0','go'];
+  keys.forEach(k => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    if (k === 'back') { b.className = 'btn-k util'; b.textContent = '⌫ Стереть'; b.onclick = () => inputKey('back'); }
+    else if (k === 'go') { b.className = 'btn-k go'; b.textContent = '✓ Готово'; b.onclick = () => inputKey('go'); }
+    else { b.className = 'btn-k'; b.textContent = k; b.onclick = () => inputKey(k); }
+    els.keypad.appendChild(b);
+  });
+}
+function inputKey(k) {
+  const t = state.test;
+  if (!t || t.checked || state.ttype !== 2) return;
+  if (k === 'back') state.input = state.input.slice(0, -1);
+  else if (k === 'go') { if (state.input) { sfx.ui(); return checkAnswer(); } return; }
+  else if (state.input.length < SLOTS) {
+    state.input += k;
+    if (state.input.length > 1 && state.input[0] === '0') state.input = state.input.slice(1);
+  }
+  sfx.ui();
+  setLcd(state.input || null);
+  updateCheckEnabled();
+}
+
+/* ============================================================
+   ПРИВЯЗКА СОБЫТИЙ
+   ============================================================ */
+function bindUI() {
+  $('#btnDemo').onclick = () => startDemo();
+  $('#btnTest').onclick = () => $('#dialogCount').classList.add('open');
+  $('#btnCountBack').onclick = () => $('#dialogCount').classList.remove('open');
+  document.querySelectorAll('.count-btn').forEach(b => {
+    b.onclick = () => { $('#dialogCount').classList.remove('open'); startTest(+b.dataset.n); };
+  });
+
+  els.btnBack.onclick = () => {
+    if (state.mode === 'test' && state.test && state.test.idx < state.test.total) {
+      $('#dialogLeave').classList.add('open');
+    } else goMenu();
+  };
+  $('#btnLeaveYes').onclick = () => { $('#dialogLeave').classList.remove('open'); goMenu(); };
+  $('#btnLeaveNo').onclick = () => $('#dialogLeave').classList.remove('open');
+
+  els.btnReset.onclick = () => {
+    setValueAnimated(0, { dur: 380, stagger: 22 });
+    if (state.mode === 'demo') renderLcdValue();
+  };
+  els.btnCheck.onclick = checkAnswer;
+  els.btnNext.onclick = () => advance();
+
+  $('#btnAgain').onclick = () => startTest(state.test.total);
+  $('#btnMenu2').onclick = () => goMenu();
+
+  els.btnSound.onclick = () => {
+    const on = sfx.toggle();
+    els.btnSound.textContent = on ? '🔊' : '🔇';
+    els.btnSound.title = on ? 'Звук включён' : 'Звук выключен';
+    if (on) sfx.ui();
+  };
+
+  /* физическая клавиатура в задании «Запиши число» */
+  document.addEventListener('keydown', e => {
+    if (els.body.dataset.screen !== 'game' || state.mode !== 'test' || state.ttype !== 2) return;
+    const t = state.test; if (!t || t.checked) return;
+    if (/^[0-9]$/.test(e.key)) inputKey(e.key);
+    else if (e.key === 'Backspace') inputKey('back');
+    else if (e.key === 'Enter') { if (state.input) checkAnswer(); }
+  });
+
+  /* звук на всех крупных кнопках */
+  document.querySelectorAll('.btn, .mode-card, .count-btn').forEach(b =>
+    b.addEventListener('pointerdown', () => sfx.ui()));
+
+  /* пересчёт геометрии */
+  let raf = 0;
+  const relayout = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { fitAbacus(); sizeLcd(); }); };
+  window.addEventListener('resize', relayout);
+  if (window.ResizeObserver) new ResizeObserver(relayout).observe(els.area);
+}
+
+function goMenu() {
+  state.mode = null; state.ttype = null; state.locked = true;
+  els.abacus.classList.add('locked');
+  setModeUI();
+  showScreen('menu');
+}
+
+/* ============================================================
+   СТАРТ
+   ============================================================ */
+buildAbacus();
+buildLcd();
+buildKeypad();
+bindUI();
+els.abacus.classList.add('locked');
+els.btnSound.textContent = sfx.enabled ? '🔊' : '🔇';
+fitAbacus();
+setLcd(null);
+</script>
+</body>
+</html>
